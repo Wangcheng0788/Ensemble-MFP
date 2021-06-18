@@ -1,0 +1,33 @@
+
+
+PARA_adjust=zeros(441,6);
+tflag=0;
+cflag=0;gflag=0;
+
+for c=-4%-10:10%-4
+%     c
+    gflag=0;
+    cflag=cflag+1;
+    for gamma=-7%-10:10%-7
+        gamma;
+%         tic
+        gflag=gflag+1;
+        tflag=tflag+1;
+%             tic
+        model=svmtrain(train_label,Fea{t,4},strcat(['-t 2 -c ',num2str(2^c), ' -g ',num2str(2^gamma),' -w1 1 -w-1 1 -h 0 -q']));
+        [pre_vali,acc_vali,dec_vali]=svmpredict(vali_label,Fea{t,5},model,strcat('-q'));
+        [pre_test,acc_test,dec_test]=svmpredict(test_label,Fea{t,3},model,strcat('-q'));
+        PARA_adjust(tflag,1)=c;
+        PARA_adjust(tflag,2)=gamma;
+        HM_vali(cflag,gflag)=AUC_cal(dec_vali,vali_label);
+        HM_test(cflag,gflag)=AUC_cal(dec_test,test_label);
+        PARA_adjust(tflag,3)=AUC_cal(dec_vali,vali_label);
+        PARA_adjust(tflag,4)=AUC_cal(dec_test,test_label);
+%         toc
+    end
+end
+% figure;
+% xvalue=-10:10;
+% yvalue=-10:10;
+% h=heatmap(xvalue,yvalue,HM_test);
+% PARA_adjust(1,:)        
