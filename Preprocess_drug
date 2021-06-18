@@ -1,0 +1,19 @@
+DATA=importdata([NAME,'.txt']);                                             % load the subdataset file which is defined as ".txt"
+feature_check;                                                              % Define the location of feature description files to load later
+
+[z_target,z_drug]=size(DATA.data);                                          % z_target, z_drug represent the total number in the subdataset
+
+[drug_train,drug_vali,drug_test]=Fold_div_vali((1:z_drug)',5);
+target_index=(1:z_target)';
+% [target_train,target_vali,target_test]=Fold_div_vali((1:z_target)',5);
+
+train_index=DATA.data(target_index,drug_train);
+z_pos_train=sum(train_index(:));
+vali_index=DATA.data(target_index,drug_vali);
+z_pos_vali=sum(vali_index(:));
+test_index=DATA.data(target_index,drug_test);
+z_pos_test=sum(test_index(:));
+
+
+Target=DATA.textdata(2:(z_target+1),1);
+Drug=DATA.textdata(1,2:(z_drug+1))';
