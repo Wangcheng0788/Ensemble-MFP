@@ -1,0 +1,35 @@
+loc_t=zeros(size(target_index,1),1);
+loc_d=zeros(size(drug_train,1),1);
+for i=1:size(target_index,1)
+    loc_t(i,1)=find((strcmp(descriptor_target.textdata(:,1),Target{target_index(i,1),1})))-1;
+end
+for j=1:size(drug_train,1)
+    loc_d(j,1)=find(strcmp(descriptor_drug.textdata(:,1),['AUTOGEN_',Drug{drug_train(j,1),1}]))-1;
+end
+k1=1;k2=1;
+mean_train_pos=zeros(1,z_dim_drug+z_dim_target);
+for i=1:size(target_index,1)
+    for j=1:size(drug_train,1)
+        if train_index(i,j)==1
+            train_index(i,j);
+            Pos_train(k1,:)=[loc_d(j,1),loc_t(i,1)];
+            POS_train_NAME{k1,1}=[Drug{drug_train(j,1),1},Target{target_index(i,1),1}];
+            mean_train_pos=mean_train_pos+[descriptor_drug.data(loc_d(j,1),:),descriptor_target.data(loc_t(i,1),:)];
+            k1=k1+1;
+        else
+            Unlabel_train(k2,:)=[loc_d(j,1),loc_t(i,1)];
+            UNL_train_NAME{k2,1}=[Drug{drug_train(j,1),1},Target{target_index(i,1),1}];
+            k2=k2+1;
+        end
+    end
+end
+
+mean_train_pos=mean_train_pos/z_pos_train;
+
+dis_unl_train=zeros(size(Unlabel_train,1),1);
+for i=1:size(Unlabel_train,1)
+    dis_unl_train(i,1)=sum((mean_train_pos-[descriptor_drug.data(Unlabel_train(i,1),:),descriptor_target.data(Unlabel_train(i,2),:)]).^2);
+end
+[mt,nt]=sort(dis_unl_train);
+TNEG=Unlabel_train(nt,:);
+Neg_train=TNEG((size(Unlabel_train,1)-z_pos_train+1):size(Unlabel_train,1),:);
