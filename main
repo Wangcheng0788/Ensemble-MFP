@@ -1,0 +1,98 @@
+% The code is used in Ensemble-MFP to predict drug-target interactions
+% The dataset used can be download at http://
+% drug descriptors are obtained by PaDEL-Descriptor (version-)
+% target descritpros are obtained by PROFEAT (http://)
+% libsvm (version-3.23) is used in this code
+
+clear
+
+% max repeat times of experiments
+max_repeat=20;
+
+% Dataset Selection
+NAME='GPCR';
+% NAME='Enzyme';
+% NAME='Ion_channel';
+% NAME='Nuclear_receptor';
+
+% 5-fold cross validation according with drugs
+Preprocess_drug;
+
+for qflag=1:max_repeat
+    qflag
+
+Union_vali=[];
+Union_test=[];
+Union_train=[];
+
+% three feature pairs used
+M=[3,1;9,3;11,6];
+
+fp_n=size(M,1);    % define the number of feature pairs used
+Fea=cell(fp_n,7);  % "Fea" is used to save the correlated data information
+nflag=0;
+
+for qm=1:fp_n
+    dr_i=M(qm,1);   % extract the corresponding drug descriptors
+    ta_i=M(qm,2);   % extract the corresponding target descriptors
+    nflag=nflag+1;
+    Data_generation_drug;           % generate the feature pairs
+    Fea{nflag,1}=drug_data;         % drug features
+    Fea{nflag,2}=target_data;       % target features
+%     generate the feature pairs in training set
+    Fea{nflag,4}=[[descriptor_drug.data(Pos_train(:,1),:),descriptor_target.data(Pos_train(:,2),:)];[descriptor_drug.data(Neg_train(:,1),:),descriptor_target.data(Neg_train(:,2),:)]];
+    Union_vali=[Union_vali;Neg_vali];   % union of negative samples in validation set
+    Union_test=[Union_test;Neg_test];   % union of negative samples in test set
+%     generate the feature pairs in unlabel set
+    Fea{nflag,6}=[descriptor_drug.data(Unlabel_test(:,1),:),descriptor_target.data(Unlabel_test(:,2),:)];
+end
+
+
+Neg_vali_u=ran_select(Union_vali,z_pos_vali,2); % random selection from U-vali
+Neg_test_u=ran_select(Union_test,z_pos_test,2); % random selection from U-test
+
+% generate the feature pairs in validation set and test set
+for qm=1:fp_n
+    Fea{qm,5}=[[Fea{qm,1}(Pos_vali(:,1),:),Fea{qm,2}(Pos_vali(:,2),:)];[Fea{qm,1}(Neg_vali_u(:,1),:),Fea{qm,2}(Neg_vali_u(:,2),:)]];
+    Fea{qm,3}=[[Fea{qm,1}(Pos_test(:,1),:),Fea{qm,2}(Pos_test(:,2),:)];[Fea{qm,1}(Neg_test_u(:,1),:),Fea{qm,2}(Neg_test_u(:,2),:)]];
+end
+% define the label of training set, validation set and test set
+train_label=[ones(z_pos_train,1);zeros(z_pos_train,1)];
+vali_label=[ones(z_pos_vali,1);zeros(z_pos_vali,1)];
+test_label=[ones(z_pos_test,1);zeros(z_pos_test,1)];
+
+
+decV=cell(fp_n,1);
+decT=cell(fp_n,1);
+
+model_set=cell(fp_n,1);
+for t=1:fp_n
+    Parameter_adjust;   % grid search for c and gamma
+    model_set{t,1}=model;
+    decV{t,1}=dec_vali;
+    decT{t,1}=dec_test;
+end
+
+
+
+% optimization of weight vectors
+y=[];
+for w1=0:0.1:1
+    for w2=0:0.1:(1-w1)
+        dec=w1*decV{1,1}+w2*decV{2,1}+(1-w1-w2)*decV{3,1};
+        y=[y;[w1,w2,1-w1-w2,AUC_cal(dec,vali_label)]];
+    end
+end
+
+[r,loc]=max(y(:,4));    % r is the maximum in validation set, loc record the optimized weight vector
+
+max(y(:,4));
+w1=y(loc,1);
+w2=y(loc,2);
+w3=1-w1-w2;
+% show the optimized weight vector
+[w1,w2,w3]
+% show the optimized prediction in test set
+AUC_cal(w1*decT{1,1}+w2*decT{2,1}+w3*decT{3,1},test_label)
+
+end
