@@ -1,0 +1,36 @@
+loc_t=zeros(size(target_index,1),1);
+loc_d=zeros(size(drug_vali,1),1);
+for i=1:size(target_index,1)
+    loc_t(i,1)=find((strcmp(descriptor_target.textdata(:,1),Target{target_index(i,1),1})))-1;
+end
+for j=1:size(drug_vali,1)
+    loc_d(j,1)=find(strcmp(descriptor_drug.textdata(:,1),['AUTOGEN_',Drug{drug_vali(j,1),1}]))-1;
+end
+k1=1;k2=1;
+mean_vali_pos=zeros(1,z_dim_drug+z_dim_target);
+for i=1:size(target_index,1)
+    for j=1:size(drug_vali,1)
+        if vali_index(i,j)==1
+            Pos_vali(k1,:)=[loc_d(j,1),loc_t(i,1)];
+            POS_vali_NAME{k1,1}=[Drug{drug_vali(j,1),1},Target{target_index(i,1),1}];
+            mean_vali_pos=mean_vali_pos+[descriptor_drug.data(loc_d(j,1),:),descriptor_target.data(loc_t(i,1),:)];
+            k1=k1+1;
+        else
+            Unlabel_vali(k2,:)=[loc_d(j,1),loc_t(i,1)];
+            UNL_vali_NAME{k2,1}=[Drug{drug_vali(j,1),1},Target{target_index(i,1),1}];
+            k2=k2+1;
+        end
+    end
+end
+
+% Neg_vali=ran_select(Unlabel_vali,z_pos_vali,2);
+
+mean_vali_pos=mean_vali_pos/z_pos_vali;
+
+dis_unl_vali=zeros(size(Unlabel_vali,1),1);
+for i=1:size(Unlabel_vali,1)
+    dis_unl_vali(i,1)=sum((mean_vali_pos-[descriptor_drug.data(Unlabel_vali(i,1),:),descriptor_target.data(Unlabel_vali(i,2),:)]).^2);
+end
+[mt,nt]=sort(dis_unl_vali);
+TNEG=Unlabel_vali(nt,:);
+Neg_vali=TNEG((size(Unlabel_vali,1)-z_pos_vali+1):size(Unlabel_vali,1),:);
