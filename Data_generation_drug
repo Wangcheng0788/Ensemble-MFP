@@ -1,0 +1,28 @@
+% function [Pos_set,Neg_set,Unlabel_set,drug_data,target_data,UNL_NAME,TNEG] = Data_generation(NAME,dr_i,ta_i)
+
+
+descriptor_drug=importdata([filepath_drug,'/',D_list{dr_i,1},'.csv']);      % load drug-descriptor files
+descriptor_target=importdata([filepath_target,'/',T_list{ta_i,1},'.csv']);  % load target-descriptor files
+
+z_dim_drug=size(descriptor_drug.data,2);                                    % dimension of drug-descriptor
+z_dim_target=size(descriptor_target.data,2);                                % dimension of target-descriptor
+
+Pos_train=zeros(z_pos_train,2);
+POS_train_NAME=cell(z_pos_train,1);
+Unlabel_train=zeros(size(drug_train,1)*size(target_index,1)-z_pos_train,2);
+Pos_vali=zeros(z_pos_vali,2);
+Unlabel_vali=zeros(size(drug_vali,1)*size(target_index,1)-z_pos_vali,2);
+Pos_test=zeros(z_pos_test,2);
+Unlabel_test=zeros(size(drug_test,1)*size(target_index,1)-z_pos_test,2);
+
+for_train_drug;
+for_vali_drug;
+for_test_drug;
+
+
+
+drug_data=descriptor_drug.data;
+target_data=descriptor_target.data;
+
+% end
+
